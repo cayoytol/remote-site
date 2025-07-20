@@ -69,12 +69,21 @@
         socket.emit('playAudio', url);
       });
 
-    // 2b. Музыка по URL
-    document.getElementById('playUrlBtn')
-      .addEventListener('click', () => {
-        const url = document.getElementById('audioUrlInput').value.trim();
-        if (url) socket.emit('playAudio', url);
-      });
+   <!-- 2b. Воспроизвести музыку по URL -->
+    <div class="flex items-center space-x-2 w-full max-w-md">
+    <input
+        type="text"
+        id="audioUrlInput"
+        placeholder="https://example.com/song.mp3"
+        class="flex-grow border rounded p-2"
+    />
+    <button
+        id="playUrlBtn"
+        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+        Воспроизвести URL
+    </button>
+    </div>
 
     // 3. Скринкаст / камера
     document.getElementById('shareScreenBtn')
