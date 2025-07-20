@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Page</title>
+  <style>
+    body {
+      transition: background-color 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    h1 { color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+  <h1>Ждём команду с телефона…</h1>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    socket.on('backgroundChanged', color => {
+      document.body.style.backgroundColor = color;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Panel</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Панель управления</h1>
+  <button onclick="sendColor('#ffffff')">Белый</button>
+  <button onclick="sendColor('#343a40')">Тёмный</button>
+  <button onclick="sendColor('#007bff')">Синий</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    function sendColor(color) {
+      socket.emit('changeBackground', color);
+    }
+  </script>
+</body>
+</html>
