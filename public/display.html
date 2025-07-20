@@ -4,40 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Display Page</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white flex flex-col items-center justify-center h-screen space-y-6 p-6">
 
   <h1 id="msg" class="text-4xl font-bold">Ожидаю команд…</h1>
-  <audio id="audioPlayer" controls class="w-full max-w-md"></audio>
-  <img id="screenShare" class="max-w-full max-h-full" alt="Скринкаст"/>
+  <audio id="audioPlayer" controls preload="auto" class="w-full max-w-md"></audio>
+  <img id="screenShare" class="max-w-full max-h-full" alt="Скринкаст" style="display:none;" />
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const audio = document.getElementById('audioPlayer');
-    const img   = document.getElementById('screenShare');
-    const msg   = document.getElementById('msg');
+    const audio  = document.getElementById('audioPlayer');
+    const img    = document.getElementById('screenShare');
+    const msg    = document.getElementById('msg');
 
+    // Разблокировка автоплей: первый клик
+    document.body.addEventListener('click', () => audio.play().catch(() => {}), { once: true });
+
+    // Фон
     socket.on('backgroundChanged', color => {
       document.body.style.backgroundColor = color;
       msg.textContent = `Фон: ${color}`;
     });
 
-    socket.on('playAudio', dataUrl => {
-      audio.src = dataUrl;
-      audio.play();
-      msg.textContent = 'Играет музыка 🎵';
+    // Воспроизведение аудио по URL
+    socket.on('playAudio', src => {
+      audio.src = src;
+      audio.load();
+      audio.play().then(() => {
+        msg.textContent = 'Играет музыка 🎵';
+      }).catch(err => {
+        console.warn('Autoplay failed:', err);
+        msg.textContent = 'Нажмите по странице, чтобы включить звук';
+      });
     });
 
+    // Скринкаст (кадр по кадру)
     socket.on('screenFrame', dataUrl => {
+      img.style.display = 'block';
       img.src = dataUrl;
-      msg.textContent = 'Скринкаст…';
+      msg.textContent = 'Трансляция…';
     });
 
+    // Переход по Google-поиску
     socket.on('googleSearch', query => {
-      window.location.href =
-        'https://www.google.com/search?q=' + encodeURIComponent(query);
+      window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(query);
     });
   </script>
 </body>

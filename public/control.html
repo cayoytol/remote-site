@@ -12,25 +12,31 @@
   <h1 class="text-3xl font-bold">Панель управления</h1>
 
   <!-- 1. Цвет -->
-  <label class="flex items-center space-x-2">
+  <label class="flex items-center space-x-2 w-full max-w-md">
     <span>Фон:</span>
-    <input type="color" id="colorPicker" value="#ffffff"
-      class="w-10 h-10 p-0 border-0"/>
+    <input type="color" id="colorPicker" value="#ffffff" class="w-10 h-10 p-0 border-0"/>
   </label>
 
-  <!-- 2. Музыка -->
-  <label class="flex items-center space-x-2">
-    <span>Музыка:</span>
+  <!-- 2a. Загрузка музыки (файл) -->
+  <label class="flex items-center space-x-2 w-full max-w-md">
+    <span>Музыка (файл):</span>
     <input type="file" id="audioFile" accept="audio/*"
-      class="file:mr-4 file:py-2 file:px-4 file:rounded-full
-             file:border-0 file:text-sm file:font-semibold
-             file:bg-blue-500 file:text-white hover:file:bg-blue-600"/>
+      class="flex-grow file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"/>
   </label>
 
-  <!-- 3. Скринкаст -->
+  <!-- 2b. Воспроизвести музыку по URL -->
+  <div class="flex items-center space-x-2 w-full max-w-md">
+    <input type="text" id="audioUrlInput" placeholder="https://example.com/song.mp3"
+      class="flex-grow border rounded p-2"/>
+    <button id="playUrlBtn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+      Воспроизвести URL
+    </button>
+  </div>
+
+  <!-- 3. Скринкаст или камера -->
   <button id="shareScreenBtn"
     class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-    Поделиться экраном
+    Поделиться экраном / камерой
   </button>
 
   <!-- 4. Поиск Google -->
@@ -47,34 +53,45 @@
   <script>
     const socket = io();
 
-    // Цвет
+    // 1. Смена фона
     document.getElementById('colorPicker')
-      .addEventListener('input', e =>
-        socket.emit('changeBackground', e.target.value)
-      );
+      .addEventListener('input', e => socket.emit('changeBackground', e.target.value));
 
-    // Музыка
+    // 2a. Музыка из файла
     document.getElementById('audioFile')
       .addEventListener('change', async e => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () =>
-          socket.emit('playAudio', reader.result);
-        reader.readAsDataURL(file);
+        const formData = new FormData();
+        formData.append('audio', file);
+        const res = await fetch('/upload-audio', { method: 'POST', body: formData });
+        const { url } = await res.json();
+        socket.emit('playAudio', url);
       });
 
-    // Скринкаст
+    // 2b. Музыка по URL
+    document.getElementById('playUrlBtn')
+      .addEventListener('click', () => {
+        const url = document.getElementById('audioUrlInput').value.trim();
+        if (url) socket.emit('playAudio', url);
+      });
+
+    // 3. Скринкаст / камера
     document.getElementById('shareScreenBtn')
       .addEventListener('click', async () => {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        let stream;
+        if (navigator.mediaDevices.getDisplayMedia) {
+          try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true }); } catch {};
+        }
+        if (!stream && navigator.mediaDevices.getUserMedia) {
+          try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); } catch { alert('Не удалось получить ни экран, ни камеру.'); return; }
+        }
+        if (!stream) return;
         const video = document.createElement('video');
         video.srcObject = stream;
         await video.play();
-
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-
         (function sendFrame() {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
@@ -84,7 +101,7 @@
         })();
       });
 
-    // Google-поиск
+    // 4. Google-поиск
     document.getElementById('searchBtn')
       .addEventListener('click', () => {
         const q = document.getElementById('searchQuery').value.trim();
