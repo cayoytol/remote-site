@@ -2,29 +2,42 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Display Page</title>
-  <style>
-    body {
-      transition: background-color 0.3s;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      font-family: sans-serif;
-    }
-    h1 { color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Ждём команду с телефона…</h1>
+<body class="bg-white flex flex-col items-center justify-center h-screen space-y-6 p-6">
+
+  <h1 id="msg" class="text-4xl font-bold">Ожидаю команд…</h1>
+  <audio id="audioPlayer" controls class="w-full max-w-md"></audio>
+  <img id="screenShare" class="max-w-full max-h-full" alt="Скринкаст"/>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const audio = document.getElementById('audioPlayer');
+    const img   = document.getElementById('screenShare');
+    const msg   = document.getElementById('msg');
+
     socket.on('backgroundChanged', color => {
       document.body.style.backgroundColor = color;
+      msg.textContent = `Фон: ${color}`;
+    });
+
+    socket.on('playAudio', dataUrl => {
+      audio.src = dataUrl;
+      audio.play();
+      msg.textContent = 'Играет музыка 🎵';
+    });
+
+    socket.on('screenFrame', dataUrl => {
+      img.src = dataUrl;
+      msg.textContent = 'Скринкаст…';
+    });
+
+    socket.on('googleSearch', query => {
+      window.location.href =
+        'https://www.google.com/search?q=' + encodeURIComponent(query);
     });
   </script>
 </body>

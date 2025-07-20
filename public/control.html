@@ -2,25 +2,94 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Control Panel</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
-  </style>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Панель управления</h1>
-  <button onclick="sendColor('#ffffff')">Белый</button>
-  <button onclick="sendColor('#343a40')">Тёмный</button>
-  <button onclick="sendColor('#007bff')">Синий</button>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center p-6 space-y-6">
+
+  <h1 class="text-3xl font-bold">Панель управления</h1>
+
+  <!-- 1. Цвет -->
+  <label class="flex items-center space-x-2">
+    <span>Фон:</span>
+    <input type="color" id="colorPicker" value="#ffffff"
+      class="w-10 h-10 p-0 border-0"/>
+  </label>
+
+  <!-- 2. Музыка -->
+  <label class="flex items-center space-x-2">
+    <span>Музыка:</span>
+    <input type="file" id="audioFile" accept="audio/*"
+      class="file:mr-4 file:py-2 file:px-4 file:rounded-full
+             file:border-0 file:text-sm file:font-semibold
+             file:bg-blue-500 file:text-white hover:file:bg-blue-600"/>
+  </label>
+
+  <!-- 3. Скринкаст -->
+  <button id="shareScreenBtn"
+    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+    Поделиться экраном
+  </button>
+
+  <!-- 4. Поиск Google -->
+  <div class="flex space-x-2 w-full max-w-md">
+    <input type="text" id="searchQuery" placeholder="Поиск в Google"
+      class="flex-grow border rounded p-2"/>
+    <button id="searchBtn"
+      class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+      Найти
+    </button>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    function sendColor(color) {
-      socket.emit('changeBackground', color);
-    }
+
+    // Цвет
+    document.getElementById('colorPicker')
+      .addEventListener('input', e =>
+        socket.emit('changeBackground', e.target.value)
+      );
+
+    // Музыка
+    document.getElementById('audioFile')
+      .addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () =>
+          socket.emit('playAudio', reader.result);
+        reader.readAsDataURL(file);
+      });
+
+    // Скринкаст
+    document.getElementById('shareScreenBtn')
+      .addEventListener('click', async () => {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        await video.play();
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        (function sendFrame() {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+          socket.emit('screenFrame', canvas.toDataURL('image/jpeg', 0.5));
+          requestAnimationFrame(sendFrame);
+        })();
+      });
+
+    // Google-поиск
+    document.getElementById('searchBtn')
+      .addEventListener('click', () => {
+        const q = document.getElementById('searchQuery').value.trim();
+        if (q) socket.emit('googleSearch', q);
+      });
   </script>
 </body>
 </html>

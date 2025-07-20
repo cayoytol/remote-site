@@ -9,9 +9,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "express": "^5.1.0",
     "socket.io": "^4.8.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cayoytol/remote-site.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cayoytol/remote-site/issues"
+  },
+  "homepage": "https://github.com/cayoytol/remote-site#readme",
+  "description": ""
 }
